@@ -1,83 +1,104 @@
-/**
- * Created by f on 2018/7/7.
- */
-import { Observable } from 'rxjs/Observable'
-import 'rxjs/add/observable/fromEvent'
-import 'rxjs/add/operator/debounceTime'
-import Vue from 'vue';
+
+import { Observable }  from 'rxjs/Observable';
+import 'rxjs/add/observable/fromEvent';
+import util from '../shared/util';
 
 const RxEvent = {
     install: function(vue: any) {
         vue.directive("rx-event", RxEventHandler);
     }
+};
+
+function getKey(binding: any) {
+    return binding.arg;
 }
 
-const RxEventHandler={
+// Copy from vue-rx:  v-stream directives
+const RxEventHandler =  {
+
     bind (el: any, binding: any, vnode: any) {
 
 
         let handle = binding.value;
-        const apiurl = binding.arg;
+        const event = binding.arg;
         const streamName = binding.expression;
         const modifiers = binding.modifiers;
-        handle = new Promise(function (resolve, reject) {
 
-                resolve('默认参数success');
+        if (util.isSubject(handle)) {
+            handle = { subject: handle };
+        } else if (!handle || !util.isSubject(handle.subject)) {
+            console.warn(
+                'Invalid Subject found in directive with key "' + streamName + '".' +
+                streamName + ' should be an instance of Rx.Subject or have the ' +
+                'type { subject: Rx.Subject, data: any }.',
+                vnode.context
+            );
+            return;
+        }
 
-                reject('默认参数filed');
+        const modifiersFuncs: any = {
+            stop: (e: any) => e.stopPropagation(),
+            prevent: (e: any)  => e.preventDefault()
+        };
 
-        })
-  /*          function(callback:any) {
-            console.log(callback);
-            callback("ssssssssssssssssssss")
-            //console.log(tag)
-            /!*return *!/
-        }*/
+        let modifiersExists = Object.keys(modifiersFuncs).filter(
+            key => modifiers[key]
+        );
 
-       /* handle.subscription = Observable.fromEvent(el, 'keyup')
-            .debounceTime(1000)
-            .subscribe({
-                next: function(value) {
-                    console.log(value);
-                },
-                complete: function() {
-                    console.log('complete!');
-                },
-                error: function(error) {
-                    console.log(error);
-                }
-        });*/
+        const subject = handle.subject;
+        const next = (subject.next || subject.onNext).bind(subject);
 
+        if (!modifiers.native && vnode.componentInstance) {
+            handle.subscription = util.eventToObservable(vnode.componentInstance, event).subscribe( (e: any) => {
+                modifiersExists.forEach( mod => modifiersFuncs[mod](e));
+                next({
+                    event: e,
+                    data: handle.data
+                });
+            });
+        } else {
+            if (!Observable.fromEvent) {
+                console.warn(
+                    `No 'fromEvent' method on Observable class. ` +
+                    `v-stream directive requires Rx.Observable.fromEvent method. ` +
+                    `Try import 'rxjs/add/observable/fromEvent' for ${streamName}`,
+                    vnode.context
+                );
+                return;
+            }
+            handle.subscription = Observable.fromEvent(el, event, handle.options).subscribe( (e: any) => {
+                modifiersExists.forEach(mod => modifiersFuncs[mod](e));
+                next({
+                    event: e,
+                    data: handle.data
+                });
+            });
 
-     /*    handle =  Observable.fromEvent(el,'keyup')
-             .debounceTime(1000)
-             .subscribe((event:any)=>{
-                 console.log(apiurl + 'searching....');
-                 console.log(handle + 'searching....');
-                 console.log(handle);
-                 console.log(apiurl);
-                 console.log(streamName);
-                 console.log(modifiers);
-                 binding.value="ssssssssssssss"
-                 return binding.value="ass"
-                 // this.$emit('update:selectData', 'this.deselectData')
-             })
-*/
-
+            (el._rxHandles || (el._rxHandles = {}))[getKey(binding)] = handle;
+        }
     },
 
 
     update(el: any, binding: any) {
-        // el.value ="aaa";
-
-        //console.log(binding.value)
-        // this.$emit('update:selectData', 'this.deselectData')
-
+        const handle = binding.value;
+        const _handle = el._rxHandles && el._rxHandles[getKey(binding)];
+        if (_handle && handle && util.isSubject(handle.subject)) {
+            _handle.data = handle.data;
+        }
     },
 
     unbind (el: any, binding: any) {
+        const key = getKey(binding);
+        const handle = el._rxHandles && el._rxHandles[key];
+        if (handle) {
+            if (handle.subscription) {
+                handle.subscription.unsubscribe();
+            }
+            el._rxHandles[key] = null;
+        }
     }
-
-}
+};
 
 export default RxEvent;
+
+

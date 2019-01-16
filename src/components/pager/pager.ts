@@ -2,7 +2,7 @@
 import axVue from '../../httpAnency'
 import { Component, Prop, Provide, Watch } from "vue-property-decorator";
 import template from "./pager.vue";
-import { uniq, sortBy, forEach } from 'lodash-es';
+import { forEach } from 'lodash-es';
 import selectFilters from '../../components/selectFilters/selectFilters.ts'
 
 @Component({
@@ -170,7 +170,7 @@ export default class Pager extends axVue {
         return pages;
     }
   private funActivedPage(pages: any , activedPage: any) {
-    forEach(pages, function (item) {
+    forEach(pages, (item:any) => {
       if (item.number == activedPage) {
         item["active"] = true;
       }

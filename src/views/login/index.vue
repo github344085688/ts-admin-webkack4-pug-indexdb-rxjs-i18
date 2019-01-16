@@ -1,8 +1,8 @@
 <template lang="pug">
     .loding-bader
-
+        //header
+            img.logoBoxImg(src="../../assets/img/logo.png")
         .bg-Line
-
         .longUpBox
             .title-box
                 .items-box
@@ -23,23 +23,23 @@
                     .title {{$t('message.lodings.alreadyMember')}}
                     .Login_Here {{$t('message.lodings.loginHere')}}
                     .line
-                    //.Login_Here {{searchInfo.phone}}
+                    //.Login_Here {{searchInfo.userName}}
                     text-file.input(
                     :isFocus="true"
                     v-bind:isUnderLine="true"
                     v-bind:underLinkCocor="'#ccc'"
                     v-bind:focusLinkClocor="'#d36f39'"
-                    v-bind:input.sync="searchInfo.phone"
+                    v-bind:input.sync="searchInfo.userName"
                     v-bind:name="'phone'"
                     v-bind:PopPlaceholder= "$t('message.lodings.phone') "
                     )
-                    //.Login_Here {{searchInfo.email}}
+                    //.Login_Here {{searchInfo.passWord}}
                     text-file.input(
                     :isFocus="true"
                     v-bind:isUnderLine="true"
                     v-bind:underLinkCocor="'#ccc'"
                     v-bind:focusLinkClocor="'#d36f39'"
-                    v-bind:input.sync="searchInfo.email"
+                    v-bind:input.sync="searchInfo.passWord"
                     v-bind:name="'email'"
                     v-bind:PopPlaceholder= "$t('message.lodings.email')"
                     )
@@ -50,14 +50,16 @@
                     <!--)-->
                     .button_box
                         .Remember_Me
-                            input(type="checkbox" id="rememberMe" name="rememberMe" checked  )
+                            input(type="checkbox" id="rememberMe" name="rememberMe" checked  v-on:click="isTtermsService =!isTtermsService"  )
                             label(for="rememberMe")
                             span {{$t('message.lodings.rememberMe')}}
 
                         button.bottons {{$t('message.lodings.reset')}}
                         button.bottons( v-bind:class="{'Submit':isSubmit}" v-bind:disabled="!isSubmit" v-on:click="Submit" ) {{$t('message.lodings.submit')}}
                     .line
-                    div(@click="warehouse") warehouse
+                       <!--input( type="text"  placeholder="Receipt / PO / Ref. /CNTR / SN"  v-rx-event:input="searchByInput" )-->
+
+
 
 
 </template>
